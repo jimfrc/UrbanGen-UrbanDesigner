@@ -1,0 +1,252 @@
+import { GeneratedImage, User } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+
+// 本地存储的键名
+const STORAGE_KEY_IMAGES = 'urban_gen_gallery_images';
+const STORAGE_KEY_USER = 'urban_gen_current_user';
+const STORAGE_KEY_USERS = 'urban_gen_all_users';
+
+// 简单的密码哈希函数（实际应用中应使用bcrypt等库）
+const hashPassword = (password: string): string => {
+  return btoa(password + 'urban_gen_salt'); // 简单哈希，实际应用中应使用更强的算法
+};
+
+// 验证密码
+const verifyPassword = (password: string, hashedPassword: string): boolean => {
+  return hashPassword(password) === hashedPassword;
+};
+
+/**
+ * 保存图像数据到本地存储
+ * @param images 要保存的图像数组
+ */
+export const saveImagesToLocalStorage = (images: GeneratedImage[]): void => {
+  try {
+    const jsonData = JSON.stringify(images);
+    localStorage.setItem(STORAGE_KEY_IMAGES, jsonData);
+  } catch (error) {
+    console.error('Failed to save images to localStorage:', error);
+  }
+};
+
+/**
+ * 从本地存储加载图像数据
+ * @returns 加载的图像数组，如果没有数据则返回空数组
+ */
+export const loadImagesFromLocalStorage = (): GeneratedImage[] => {
+  try {
+    const jsonData = localStorage.getItem(STORAGE_KEY_IMAGES);
+    if (jsonData) {
+      return JSON.parse(jsonData);
+    }
+  } catch (error) {
+    console.error('Failed to load images from localStorage:', error);
+  }
+  return [];
+};
+
+/**
+ * 清除本地存储中的图像数据
+ */
+export const clearImagesFromLocalStorage = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEY_IMAGES);
+  } catch (error) {
+    console.error('Failed to clear images from localStorage:', error);
+  }
+};
+
+/**
+ * 保存用户信息到本地存储
+ * @param user 要保存的用户信息
+ */
+export const saveUserToLocalStorage = (user: User | null): void => {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEY_USER);
+    }
+  } catch (error) {
+    console.error('Failed to save user to localStorage:', error);
+  }
+};
+
+/**
+ * 从本地存储加载用户信息
+ * @returns 加载的用户信息，如果没有数据则返回null
+ */
+export const loadUserFromLocalStorage = (): User | null => {
+  try {
+    const jsonData = localStorage.getItem(STORAGE_KEY_USER);
+    if (jsonData) {
+      return JSON.parse(jsonData);
+    }
+  } catch (error) {
+    console.error('Failed to load user from localStorage:', error);
+  }
+  return null;
+};
+
+/**
+ * 清除本地存储中的用户信息
+ */
+export const clearUserFromLocalStorage = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEY_USER);
+  } catch (error) {
+    console.error('Failed to clear user from localStorage:', error);
+  }
+};
+
+/**
+ * 保存所有用户数据到本地存储
+ * @param users 要保存的用户数组
+ */
+export const saveAllUsersToLocalStorage = (users: User[]): void => {
+  try {
+    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+  } catch (error) {
+    console.error('Failed to save all users to localStorage:', error);
+  }
+};
+
+/**
+ * 从本地存储加载所有用户数据
+ * @returns 加载的用户数组，如果没有数据则返回空数组
+ */
+export const loadAllUsersFromLocalStorage = (): User[] => {
+  try {
+    const jsonData = localStorage.getItem(STORAGE_KEY_USERS);
+    if (jsonData) {
+      return JSON.parse(jsonData);
+    }
+  } catch (error) {
+    console.error('Failed to load all users from localStorage:', error);
+  }
+  return [];
+};
+
+/**
+ * 注册新用户
+ * @param name 用户名
+ * @param email 邮箱
+ * @param password 密码
+ * @returns 注册成功返回用户对象，失败返回错误信息
+ */
+export const registerUser = (name: string, email: string, password: string): User | string => {
+  try {
+    const allUsers = loadAllUsersFromLocalStorage();
+    
+    // 检查邮箱是否已存在
+    if (allUsers.some(user => user.email === email)) {
+      return '该邮箱已被注册';
+    }
+    
+    // 检查用户名是否已存在
+    if (allUsers.some(user => user.name === name)) {
+      return '该用户名已被使用';
+    }
+    
+    // 创建新用户
+    const newUser: User = {
+      id: uuidv4(),
+      name,
+      email,
+      password: hashPassword(password),
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+      credits: 100, // 初始积分
+      joinedAt: Date.now()
+    };
+    
+    // 保存新用户
+    allUsers.push(newUser);
+    saveAllUsersToLocalStorage(allUsers);
+    
+    return newUser;
+  } catch (error) {
+    console.error('Failed to register user:', error);
+    return '注册失败，请稍后重试';
+  }
+};
+
+/**
+ * 用户登录验证
+ * @param email 邮箱
+ * @param password 密码
+ * @returns 登录成功返回用户对象，失败返回错误信息
+ */
+export const loginUser = (email: string, password: string): User | string => {
+  try {
+    const allUsers = loadAllUsersFromLocalStorage();
+    
+    // 查找用户
+    const user = allUsers.find(user => user.email === email);
+    
+    if (!user) {
+      return '用户不存在';
+    }
+    
+    // 验证密码
+    if (!verifyPassword(password, user.password)) {
+      return '密码错误';
+    }
+    
+    return user;
+  } catch (error) {
+    console.error('Failed to login user:', error);
+    return '登录失败，请稍后重试';
+  }
+};
+
+/**
+ * 检查用户名是否已存在
+ * @param name 用户名
+ * @returns 存在返回true，不存在返回false
+ */
+export const isUsernameExists = (name: string): boolean => {
+  try {
+    const allUsers = loadAllUsersFromLocalStorage();
+    return allUsers.some(user => user.name === name);
+  } catch (error) {
+    console.error('Failed to check username:', error);
+    return false;
+  }
+};
+
+/**
+ * 检查邮箱是否已存在
+ * @param email 邮箱
+ * @returns 存在返回true，不存在返回false
+ */
+export const isEmailExists = (email: string): boolean => {
+  try {
+    const allUsers = loadAllUsersFromLocalStorage();
+    return allUsers.some(user => user.email === email);
+  } catch (error) {
+    console.error('Failed to check email:', error);
+    return false;
+  }
+};
+
+/**
+ * 更新用户信息
+ * @param user 更新后的用户信息
+ */
+export const updateUser = (user: User): void => {
+  try {
+    const allUsers = loadAllUsersFromLocalStorage();
+    const userIndex = allUsers.findIndex(u => u.id === user.id);
+    
+    if (userIndex !== -1) {
+      // 更新所有用户列表中的用户信息
+      allUsers[userIndex] = user;
+      saveAllUsersToLocalStorage(allUsers);
+    }
+    
+    // 更新当前登录用户信息
+    saveUserToLocalStorage(user);
+  } catch (error) {
+    console.error('Failed to update user:', error);
+  }
+};
