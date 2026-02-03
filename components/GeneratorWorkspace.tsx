@@ -2,8 +2,9 @@ import React, { useState, useRef } from 'react';
 import { DesignModule, Resolution, GeneratedImage, CREDIT_COSTS, User, AspectRatio, ImageSize } from '../types';
 import Button from './Button';
 import { generateUrbanConcept } from '../services/geminiService';
+import { saveGeneratedImageToLocal, saveGenerationRecord } from '../services/localStorageService';
 import { Download, Sliders, AlertCircle, Database, Lock, Upload } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv } from 'uuid';
 
 interface GeneratorWorkspaceProps {
   module: DesignModule;
@@ -89,18 +90,38 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
         console.log('After state update, generatedImage is:', typeof generatedImage, generatedImage ? generatedImage.substring(0, 50) + '...' : null);
       }, 0);
       
+      const imageId = uuidv();
       const newImage: GeneratedImage = {
-        id: uuidv4(),
+        id: imageId,
         url: resultBase64,
         prompt: fullPrompt,
-        userPrompt: userPrompt, // 仅存储用户输入的提示词
+        userPrompt: userPrompt,
         resolution: resolution,
         aspectRatio: aspectRatio,
         imageSize: imageSize,
         moduleName: module.title,
         createdAt: Date.now()
       };
-      
+
+      const localPath = await saveGeneratedImageToLocal(resultBase64, imageId);
+      if (localPath) {
+        newImage.localPath = localPath;
+      }
+
+      await saveGenerationRecord({
+        userId: user.id,
+        userName: user.name,
+        userEmail: user.email,
+        imageId: imageId,
+        model: resolution,
+        resolution: resolution,
+        aspectRatio: aspectRatio,
+        imageSize: imageSize,
+        prompt: fullPrompt,
+        userPrompt: userPrompt,
+        moduleName: module.title
+      });
+
       onImageGenerated(newImage, cost);
 
     } catch (err: any) {
@@ -197,9 +218,8 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
           });
         }
 
-        // 生成图像名称（图1, 图2等）
         const imageName = `图${referenceImages.length + newImages.length + 1}`;
-        newImages.push({ id: uuidv4(), url: imageUrl, name: imageName });
+        newImages.push({ id: uuidv(), url: imageUrl, name: imageName });
       } catch (err) {
         setError('Failed to process image. Please try again.');
         return;

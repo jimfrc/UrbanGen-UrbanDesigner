@@ -6,18 +6,48 @@ const GRS_API_ENDPOINT = `${GRS_API_HOST}/v1/draw/nano-banana`;
 // 注意：实际使用时需要从环境变量获取API密钥
 const API_KEY = process.env.GRS_API_KEY || '';
 
+// 辅助函数：从URL下载图片并转换为base64
+async function downloadImageAsBase64(url: string): Promise<string> {
+  try {
+    console.log('Downloading image from URL:', url);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.statusText}`);
+    }
+    
+    const blob = await response.blob();
+    console.log('Downloaded image size:', blob.size, 'bytes');
+    
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        console.log('Converted to base64, length:', result.length);
+        resolve(result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error downloading image:', error);
+    throw error;
+  }
+}
+
 // 辅助函数：处理图像URL
-function processImageUrl(url: string): string {
+async function processImageUrl(url: string): Promise<string> {
   // 移除可能的反引号和空格
   const cleanedUrl = url.trim().replace(/`/g, '');
   
-  // 如果是绝对URL，直接返回
+  // 如果是绝对URL，下载图片并转换为base64
   if (cleanedUrl.startsWith('http://') || cleanedUrl.startsWith('https://')) {
-    return cleanedUrl;
+    return await downloadImageAsBase64(cleanedUrl);
   }
-  // 如果是相对URL，添加主机前缀
+  // 如果是相对URL，添加主机前缀然后下载
   else if (cleanedUrl.startsWith('/')) {
-    return `${GRS_API_HOST}${cleanedUrl}`;
+    const fullUrl = `${GRS_API_HOST}${cleanedUrl}`;
+    return await downloadImageAsBase64(fullUrl);
   }
   // 如果是base64数据，添加前缀
   else if (!cleanedUrl.startsWith('data:')) {
@@ -101,9 +131,13 @@ async function handleSSEResponse(response: Response, onProgress?: (progress: num
               } else if (eventData.status === 'succeeded' && eventData.results) {
                 // 任务完成，获取图像URL
                 if (eventData.results.length > 0 && eventData.results[0].url) {
-                  const imageUrl = processImageUrl(eventData.results[0].url);
-                  cleanup();
-                  resolve(imageUrl);
+                  processImageUrl(eventData.results[0].url).then(imageUrl => {
+                    cleanup();
+                    resolve(imageUrl);
+                  }).catch(err => {
+                    cleanup();
+                    reject(err);
+                  });
                   return;
                 }
               }
@@ -224,7 +258,7 @@ export const generateUrbanConcept = async (
         // 从results数组获取第一个图像URL
         if (responseData.results.length > 0 && responseData.results[0].url) {
           const imageUrl = responseData.results[0].url;
-          return processImageUrl(imageUrl);
+          return await processImageUrl(imageUrl);
         }
       }
       // 处理旧的API响应格式作为后备
@@ -321,7 +355,7 @@ const getGenerationResult = async (taskId: string): Promise<string> => {
         // 从results数组获取第一个图像URL
         if (responseData.results.length > 0 && responseData.results[0].url) {
           const imageUrl = responseData.results[0].url;
-          return processImageUrl(imageUrl);
+          return await processImageUrl(imageUrl);
         }
       }
       // 处理旧的API响应格式作为后备

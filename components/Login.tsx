@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Page } from '../types';
 import Button from './Button';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
+import { loginUserServer } from '../services/localStorageService';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => void;
@@ -15,11 +16,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    // 简单验证
     if (!email.trim()) {
       setError('请输入邮箱');
       return;
@@ -31,16 +31,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
     }
     
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      try {
+    
+    try {
+      const result = await loginUserServer(email, password);
+      
+      if (typeof result === 'string') {
+        setError(result);
+      } else {
         onLogin(email, password);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '登录失败');
-      } finally {
-        setIsLoading(false);
       }
-    }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

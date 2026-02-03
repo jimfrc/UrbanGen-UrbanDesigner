@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Button from './Button';
 import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
-import { isUsernameExists, isEmailExists } from '../services/localStorageService';
+import { registerUserServer } from '../services/localStorageService';
 
 interface SignUpProps {
   onSignUp: (name: string, email: string, password: string) => void;
@@ -14,47 +14,12 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [nameError, setNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [isNameAvailable, setIsNameAvailable] = useState<boolean | null>(null);
-  const [isEmailAvailable, setIsEmailAvailable] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 实时检查用户名是否可用
-  useEffect(() => {
-    if (name.trim()) {
-      const timer = setTimeout(() => {
-        const exists = isUsernameExists(name);
-        setIsNameAvailable(!exists);
-        setNameError(exists ? '该用户名已被使用' : '');
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setIsNameAvailable(null);
-      setNameError('');
-    }
-  }, [name]);
-
-  // 实时检查邮箱是否可用
-  useEffect(() => {
-    if (email.trim()) {
-      const timer = setTimeout(() => {
-        const exists = isEmailExists(email);
-        setIsEmailAvailable(!exists);
-        setEmailError(exists ? '该邮箱已被注册' : '');
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setIsEmailAvailable(null);
-      setEmailError('');
-    }
-  }, [email]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    // 表单验证
     if (!name.trim()) {
       setError('请输入用户名');
       return;
@@ -75,22 +40,21 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
       return;
     }
     
-    if (nameError || emailError) {
-      setError('请检查输入的用户名和邮箱');
-      return;
-    }
-    
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      try {
+    
+    try {
+      const result = await registerUserServer(name, email, password);
+      
+      if (typeof result === 'string') {
+        setError(result);
+      } else {
         onSignUp(name, email, password);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '注册失败');
-      } finally {
-        setIsLoading(false);
       }
-    }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '注册失败');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -136,18 +100,12 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
                   type="text"
                   required
                   placeholder="Choose a username"
-                  className={`w-full pl-11 pr-10 py-3 rounded-xl border ${nameError ? 'border-red-500' : isNameAvailable === true ? 'border-green-500' : 'border-gray-200'} focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none`}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                {isNameAvailable !== null && (
-                  <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${isNameAvailable ? 'text-green-500' : 'text-red-500'}`}>
-                    {isNameAvailable ? '✓' : '✗'}
-                  </div>
-                )}
               </div>
-              {nameError && <p className="mt-1 text-xs text-red-500">{nameError}</p>}
             </div>
 
             <div>
@@ -157,18 +115,12 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
                   type="email"
                   required
                   placeholder="your.email@example.com"
-                  className={`w-full pl-11 pr-10 py-3 rounded-xl border ${emailError ? 'border-red-500' : isEmailAvailable === true ? 'border-green-500' : 'border-gray-200'} focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none`}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                {isEmailAvailable !== null && (
-                  <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${isEmailAvailable ? 'text-green-500' : 'text-red-500'}`}>
-                    {isEmailAvailable ? '✓' : '✗'}
-                  </div>
-                )}
               </div>
-              {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
             </div>
 
             <div>

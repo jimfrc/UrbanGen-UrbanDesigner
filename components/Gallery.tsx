@@ -14,7 +14,7 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
           <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
             <Maximize2 size={32} />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Gallery is Empty</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Get creating!</h3>
           <p className="text-gray-500">No urban designs generated yet. Go to the Studio to create your first masterpiece.</p>
         </div>
       </div>

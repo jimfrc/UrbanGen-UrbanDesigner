@@ -8,6 +8,17 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        allowedHosts: [
+          'localhost',
+          'cz119370zv25.vicp.fun',
+          '.vicp.fun'
+        ],
+        proxy: {
+          '/api': {
+            target: 'http://localhost:3001',
+            changeOrigin: true,
+          }
+        }
       },
       plugins: [react()],
       define: {

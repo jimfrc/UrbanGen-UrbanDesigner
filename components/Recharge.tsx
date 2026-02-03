@@ -1,32 +1,61 @@
-import React, { useState } from 'react';
-import { RechargePackage, RECHARGE_PACKAGES } from '../types';
+import React, { useState, useEffect } from 'react';
+import { RechargePackage, RECHARGE_PACKAGES, User } from '../types';
 import Button from './Button';
-import { ArrowLeft, CheckCircle, Database, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Database, ShieldCheck, AlertCircle } from 'lucide-react';
+import { createPayment, queryPayment } from '../services/localStorageService';
 
 interface RechargeProps {
+  user: User;
   onBack: () => void;
   onRechargeComplete: (credits: number) => void;
 }
 
-const Recharge: React.FC<RechargeProps> = ({ onBack, onRechargeComplete }) => {
+const Recharge: React.FC<RechargeProps> = ({ user, onBack, onRechargeComplete }) => {
   const [selectedPackage, setSelectedPackage] = useState<RechargePackage | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
-  const handlePackageSelect = (pkg: RechargePackage) => {
+  const handlePackageSelect = async (pkg: RechargePackage) => {
     setSelectedPackage(pkg);
     setIsPaying(true);
+    setError(null);
+
+    const result = await createPayment(user.id, pkg.id, pkg.price, `充值${pkg.credits}积分`);
+
+    if (result.success && result.qrCode) {
+      setQrCode(result.qrCode);
+      setOrderId(result.orderId);
+    } else {
+      setError(result.error || '创建支付订单失败');
+      setIsPaying(false);
+    }
   };
 
-  const simulatePayment = () => {
-    setIsPaying(false);
-    setIsSuccess(true);
-    setTimeout(() => {
-      if (selectedPackage) {
-        onRechargeComplete(selectedPackage.credits);
-      }
-    }, 2000);
+  const checkPaymentStatus = async () => {
+    if (!orderId) return;
+
+    const result = await queryPayment(orderId);
+    
+    if (result.success && result.order?.status === 'success') {
+      setIsSuccess(true);
+      setQrCode(null);
+      setTimeout(() => {
+        if (selectedPackage) {
+          onRechargeComplete(selectedPackage.credits);
+        }
+      }, 2000);
+    }
   };
+
+  useEffect(() => {
+    if (orderId) {
+      const interval = setInterval(checkPaymentStatus, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [orderId]);
 
   if (isSuccess) {
     return (
@@ -87,6 +116,7 @@ const Recharge: React.FC<RechargeProps> = ({ onBack, onRechargeComplete }) => {
                 variant={selectedPackage?.id === pkg.id ? 'primary' : 'outline'}
                 className="w-full"
                 onClick={() => handlePackageSelect(pkg)}
+                isLoading={isPaying && selectedPackage?.id === pkg.id}
               >
                 Purchase Now
               </Button>
@@ -94,49 +124,59 @@ const Recharge: React.FC<RechargeProps> = ({ onBack, onRechargeComplete }) => {
           ))}
         </div>
 
-        {/* Payment Modal */}
-        {isPaying && selectedPackage && (
+        {error && (
+          <div className="mt-8 p-4 bg-red-50 text-red-600 rounded-xl text-sm flex items-center gap-2">
+            <AlertCircle size={18} />
+            {error}
+          </div>
+        )}
+
+        {qrCode && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
+            <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
               <div className="bg-blue-600 p-6 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white">
                   <img src="https://img.icons8.com/color/48/alipay.png" alt="Alipay" className="w-8 h-8" />
                   <span className="font-bold text-xl">Alipay Secure Payment</span>
                 </div>
-                <button onClick={() => setIsPaying(false)} className="text-white/60 hover:text-white">
+                <button onClick={() => setQrCode(null)} className="text-white/60 hover:text-white">
                   <ArrowLeft size={20} className="rotate-90" />
                 </button>
               </div>
 
-              <div className="p-10 flex flex-col items-center">
+              <div className="p-10">
                 <div className="text-center mb-8">
                   <p className="text-gray-500 text-sm mb-1">Payment Amount</p>
-                  <h3 className="text-4xl font-bold text-gray-900">¥ {selectedPackage.price}.00</h3>
+                  <h3 className="text-4xl font-bold text-gray-900">¥ {selectedPackage?.price}.00</h3>
+                  <p className="text-sm text-gray-400 mt-2">Order ID: {orderId}</p>
                 </div>
 
-                <div className="relative p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-inner mb-8">
-                  {/* Simulated QR Code */}
-                  <div className="w-48 h-48 bg-gray-50 flex items-center justify-center border-4 border-white overflow-hidden rounded-lg">
+                <div className="bg-blue-50 p-6 rounded-2xl text-center mb-8">
+                  <p className="text-sm text-gray-600 mb-4">Scan QR code with Alipay app to pay</p>
+                  <div className="w-48 h-48 mx-auto bg-white rounded-xl p-2">
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=alipay-recharge-${selectedPackage.id}`} 
-                      alt="Payment QR"
-                      className="w-full h-full"
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`}
+                      alt="Payment QR Code"
+                      className="w-full h-full rounded-lg"
                     />
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-                    <img src="https://img.icons8.com/color/144/alipay.png" alt="Alipay Watermark" />
-                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-green-600 text-sm font-medium mb-8 bg-green-50 px-4 py-2 rounded-full">
+                <div className="flex items-center gap-2 text-green-600 text-sm font font-medium mb-8 bg-green-50 px-4 py-2 rounded-full">
                   <ShieldCheck size={18} />
-                  Scan with your mobile app to pay
+                  Waiting for payment confirmation...
                 </div>
 
-                <Button className="w-full py-4 bg-[#00A0E9] hover:bg-[#0088CC] border-none" onClick={simulatePayment}>
-                  Confirm Payment (Demo)
-                </Button>
-                <p className="mt-4 text-xs text-gray-400">Transaction secured by 256-bit SSL encryption</p>
+                <div className="text-center space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setQrCode(null)}
+                  >
+                    Cancel Payment
+                  </Button>
+                </div>
+                <p className="mt-4 text-xs text-gray-400 text-center">Transaction secured by 256-bit SSL encryption</p>
               </div>
             </div>
           </div>

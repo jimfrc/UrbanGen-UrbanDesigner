@@ -1,7 +1,6 @@
 import { GeneratedImage, User } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-// 本地存储的键名
 const STORAGE_KEY_IMAGES = 'urban_gen_gallery_images';
 const STORAGE_KEY_USER = 'urban_gen_current_user';
 const STORAGE_KEY_USERS = 'urban_gen_all_users';
@@ -37,7 +36,8 @@ export const loadImagesFromLocalStorage = (): GeneratedImage[] => {
   try {
     const jsonData = localStorage.getItem(STORAGE_KEY_IMAGES);
     if (jsonData) {
-      return JSON.parse(jsonData);
+      const images = JSON.parse(jsonData);
+      return images.filter((image: GeneratedImage) => !image.url.includes('picsum.photos'));
     }
   } catch (error) {
     console.error('Failed to load images from localStorage:', error);
@@ -239,14 +239,221 @@ export const updateUser = (user: User): void => {
     const userIndex = allUsers.findIndex(u => u.id === user.id);
     
     if (userIndex !== -1) {
-      // 更新所有用户列表中的用户信息
       allUsers[userIndex] = user;
       saveAllUsersToLocalStorage(allUsers);
     }
     
-    // 更新当前登录用户信息
     saveUserToLocalStorage(user);
   } catch (error) {
     console.error('Failed to update user:', error);
+  }
+};
+
+const downloadImageToLocal = async (imageDataUrl: string, imageId: string): Promise<string> => {
+  try {
+    const response = await fetch('/api/save-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageData: imageDataUrl,
+        imageId: imageId
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save image to server');
+    }
+
+    const result = await response.json();
+    return result.localPath;
+  } catch (error) {
+    console.error('Failed to download image to local:', error);
+    throw error;
+  }
+};
+
+export const saveGeneratedImageToLocal = async (imageDataUrl: string, imageId: string): Promise<string | null> => {
+  try {
+    const localPath = await downloadImageToLocal(imageDataUrl, imageId);
+    return localPath;
+  } catch (error) {
+    console.error('Failed to save generated image to local:', error);
+    return null;
+  }
+};
+
+export const saveGenerationRecord = async (record: {
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  imageId: string;
+  model: string;
+  resolution?: string;
+  aspectRatio?: string;
+  imageSize?: string;
+  prompt?: string;
+  userPrompt?: string;
+  moduleName?: string;
+}): Promise<boolean> => {
+  try {
+    const response = await fetch('/api/save-generation-record', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(record)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save generation record to server');
+    }
+
+    const result = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Failed to save generation record:', error);
+    return false;
+  }
+};
+
+export const getGenerationRecords = async (userId?: string): Promise<any[]> => {
+  try {
+    const url = userId ? `/api/generation-records/${userId}` : '/api/generation-records';
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch generation records');
+    }
+
+    const result = await response.json();
+    return result.records || [];
+  } catch (error) {
+    console.error('Failed to fetch generation records:', error);
+    return [];
+  }
+};
+
+export const registerUserServer = async (name: string, email: string, password: string): Promise<User | string> => {
+  try {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return errorData.error || '注册失败，请稍后重试';
+    }
+
+    const result = await response.json();
+    return result.user as User;
+  } catch (error) {
+    console.error('Failed to register user:', error);
+    return '注册失败，请稍后重试';
+  }
+};
+
+export const loginUserServer = async (email: string, password: string): Promise<User | string> => {
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return errorData.error || '登录失败，请稍后重试';
+    }
+
+    const result = await response.json();
+    return result.user as User;
+  } catch (error) {
+    console.error('Failed to login user:', error);
+    return '登录失败，请稍后重试';
+  }
+};
+
+export const getUserFromServer = async (userId: string): Promise<User | null> => {
+  try {
+    const response = await fetch(`/api/user/${userId}`);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.user as User;
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    return null;
+  }
+};
+
+export const updateUserCreditsServer = async (userId: string, credits: number): Promise<boolean> => {
+  try {
+    const response = await fetch(`/api/user/${userId}/credits`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ credits })
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const result = await response.json();
+    return result.success;
+  } catch (error) {
+    console.error('Failed to update user credits:', error);
+    return false;
+  }
+};
+
+export const createPayment = async (userId: string, packageId: string, amount: number, subject?: string): Promise<{ success: boolean; orderId?: string; qrCode?: string; error?: string }> => {
+  try {
+    const response = await fetch('/api/payment/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, packageId, amount, subject })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return { success: false, error: errorData.error };
+    }
+
+    const result = await response.json();
+    return { success: true, orderId: result.orderId, qrCode: result.qrCode };
+  } catch (error) {
+    console.error('Failed to create payment:', error);
+    return { success: false, error: '网络错误，请稍后重试' };
+  }
+};
+
+export const queryPayment = async (orderId: string): Promise<{ success: boolean; order?: any }> => {
+  try {
+    const response = await fetch(`/api/payment/query/${orderId}`);
+
+    if (!response.ok) {
+      return { success: false };
+    }
+
+    const result = await response.json();
+    return { success: true, order: result.order };
+  } catch (error) {
+    console.error('Failed to query payment:', error);
+    return { success: false };
   }
 };

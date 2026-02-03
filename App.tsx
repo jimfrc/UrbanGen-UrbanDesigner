@@ -9,43 +9,13 @@ import SignUp from './components/SignUp';
 import Profile from './components/Profile';
 import Recharge from './components/Recharge';
 import { Page, GeneratedImage, DesignModule, User } from './types';
-import { v4 as uuidv4 } from 'uuid';
 import { MODULES } from './modules';
-import { loadImagesFromLocalStorage, saveImagesToLocalStorage, loadUserFromLocalStorage, saveUserToLocalStorage, clearUserFromLocalStorage, registerUser, loginUser, updateUser } from './services/localStorageService';
-
-const MOCK_IMAGES: GeneratedImage[] = [
-  {
-    id: uuidv4(),
-    url: 'https://picsum.photos/1024/768?random=10',
-    prompt: 'Concept art of a floating city above clouds',
-    userPrompt: 'floating city above clouds',
-    resolution: '2K' as any,
-    aspectRatio: '16:9' as any,
-    imageSize: '1K' as any,
-    moduleName: 'Futuristic',
-    createdAt: Date.now() - 86400000
-  },
-  {
-    id: uuidv4(),
-    url: 'https://picsum.photos/1024/768?random=11',
-    prompt: 'Underground lush garden city',
-    userPrompt: 'underground lush garden',
-    resolution: '1K' as any,
-    aspectRatio: '4:3' as any,
-    imageSize: '1K' as any,
-    moduleName: 'Eco-Friendly City',
-    createdAt: Date.now() - 172800000
-  }
-];
+import { loadImagesFromLocalStorage, saveImagesToLocalStorage, loadUserFromLocalStorage, saveUserToLocalStorage, clearUserFromLocalStorage, loginUserServer, registerUserServer, updateUserCreditsServer, getUserFromServer } from './services/localStorageService';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>(Page.HOME);
   const [selectedModule, setSelectedModule] = useState<DesignModule | null>(null);
-  // 初始加载时优先从本地存储获取数据，如果没有则使用模拟数据
-  const [galleryImages, setGalleryImages] = useState<GeneratedImage[]>(() => {
-    const savedImages = loadImagesFromLocalStorage();
-    return savedImages.length > 0 ? savedImages : MOCK_IMAGES;
-  });
+  const [galleryImages, setGalleryImages] = useState<GeneratedImage[]>(loadImagesFromLocalStorage);
   // 从本地存储加载用户信息
   const [currentUser, setCurrentUser] = useState<User | null>(loadUserFromLocalStorage);
 
@@ -54,7 +24,6 @@ function App() {
     saveImagesToLocalStorage(galleryImages);
   }, [galleryImages]);
 
-  // 监听currentUser变化，自动保存到本地存储
   useEffect(() => {
     saveUserToLocalStorage(currentUser);
   }, [currentUser]);
@@ -66,30 +35,24 @@ function App() {
     }
   };
 
-  const handleLogin = (email: string, password: string) => {
-    // 调用登录验证服务
-    const result = loginUser(email, password);
+  const handleLogin = async (email: string, password: string) => {
+    const result = await loginUserServer(email, password);
     
     if (typeof result === 'string') {
-      // 登录失败，抛出错误以便组件捕获
       throw new Error(result);
     }
     
-    // 登录成功
     setCurrentUser(result);
     setCurrentPage(Page.HOME);
   };
 
-  const handleSignUp = (name: string, email: string, password: string) => {
-    // 调用注册服务
-    const result = registerUser(name, email, password);
+  const handleSignUp = async (name: string, email: string, password: string) => {
+    const result = await registerUserServer(name, email, password);
     
     if (typeof result === 'string') {
-      // 注册失败，抛出错误以便组件捕获
       throw new Error(result);
     }
     
-    // 注册成功，自动登录
     setCurrentUser(result);
     setCurrentPage(Page.HOME);
   };
@@ -113,7 +76,7 @@ function App() {
         credits: currentUser.credits - cost
       };
       setCurrentUser(updatedUser);
-      updateUser(updatedUser); // 更新所有用户列表中的数据
+      updateUserCreditsServer(currentUser.id, updatedUser.credits);
     }
   };
 
@@ -124,7 +87,7 @@ function App() {
         credits: currentUser.credits + credits
       };
       setCurrentUser(updatedUser);
-      updateUser(updatedUser); // 更新所有用户列表中的数据
+      updateUserCreditsServer(currentUser.id, updatedUser.credits);
     }
     setTimeout(() => {
       setCurrentPage(Page.PROFILE);
@@ -174,6 +137,7 @@ function App() {
 
         {currentPage === Page.RECHARGE && currentUser && (
           <Recharge 
+            user={currentUser}
             onBack={() => handleNavigate(Page.PROFILE)} 
             onRechargeComplete={handleRechargeComplete} 
           />

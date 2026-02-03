@@ -32,13 +32,14 @@ export interface User {
 export interface GeneratedImage {
   id: string;
   url: string;
-  prompt: string; // 完整提示词（fixed + user）
-  userPrompt: string; // 仅用户输入的提示词
+  prompt: string;
+  userPrompt: string;
   resolution: Resolution;
   aspectRatio: AspectRatio;
   imageSize: ImageSize;
   moduleName: string;
   createdAt: number;
+  localPath?: string;
 }
 
 export interface DesignModule {
@@ -65,7 +66,7 @@ export interface RechargePackage {
 }
 
 export const RECHARGE_PACKAGES: RechargePackage[] = [
-  { id: 'pkg-1000', credits: 1000, price: 10, label: 'Starter' },
-  { id: 'pkg-5000', credits: 5000, price: 45, label: 'Professional' },
-  { id: 'pkg-10000', credits: 10000, price: 80, label: 'Enterprise' }
+  { id: 'pkg-10', credits: 10, price: 0.1, label: 'Starter' },
+  { id: 'pkg-1000', credits: 1000, price: 10, label: 'Advanced' },
+  { id: 'pkg-4000', credits: 4000, price: 30, label: 'Professional' }
 ];

@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": "1769570471740",
+      "name": "jimfrc",
+      "email": "172311284@qq.com",
+      "password": "1482cfff06c59edbbe791f0d792efee968f3acf4e3e69529095906ca562de64a",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jimfrc",
+      "credits": 70,
+      "joinedAt": 1769570471740
+    },
+    {
+      "id": "1769676173032",
+      "name": "maxexcelsior",
+      "email": "674196802@qq.com",
+      "password": "3c5f2742dfdb94c0646becec4630aa0ed0352b1330ca92fdaf5d6762a33671fe",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maxexcelsior",
+      "credits": 80,
+      "joinedAt": 1769676173032
+    }
+  ]
+}
