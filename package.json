@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "node server.js"
+    "server": "node server.js",
+    "start": "node server.js & vite",
+    "start:all": "start cmd /k \"npm run server\" && timeout /t 3 /nobreak > nul && start cmd /k \"npm run dev\""
   },
   "dependencies": {
     "@google/genai": "^1.33.0",

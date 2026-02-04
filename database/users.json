@@ -1,22 +1,40 @@
 {
   "users": [
     {
-      "id": "1769570471740",
-      "name": "jimfrc",
-      "email": "172311284@qq.com",
-      "password": "1482cfff06c59edbbe791f0d792efee968f3acf4e3e69529095906ca562de64a",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jimfrc",
-      "credits": 70,
-      "joinedAt": 1769570471740
+      "id": "1770178283615",
+      "name": "testuser",
+      "email": "test@example.com",
+      "password": "e6395d6566e26a09bba9968103c2e7bf99ad19b2c8a81a04ef481d388db60a7f",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=testuser",
+      "credits": 100,
+      "joinedAt": 1770178283615
     },
     {
-      "id": "1769676173032",
-      "name": "maxexcelsior",
-      "email": "674196802@qq.com",
-      "password": "3c5f2742dfdb94c0646becec4630aa0ed0352b1330ca92fdaf5d6762a33671fe",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maxexcelsior",
-      "credits": 80,
-      "joinedAt": 1769676173032
+      "id": "1770178946188",
+      "name": "testuser2",
+      "email": "test2@example.com",
+      "password": "e6395d6566e26a09bba9968103c2e7bf99ad19b2c8a81a04ef481d388db60a7f",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=testuser2",
+      "credits": 100,
+      "joinedAt": 1770178946188
+    },
+    {
+      "id": "1770188290444",
+      "name": "jim",
+      "email": "172311284@qq.com",
+      "password": "1482cfff06c59edbbe791f0d792efee968f3acf4e3e69529095906ca562de64a",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=jim",
+      "credits": 100,
+      "joinedAt": 1770188290445
+    },
+    {
+      "id": "1770190431498",
+      "name": "maoyingjun",
+      "email": "736950957@qq.com",
+      "password": "b824cd17b980f323cd52f65ab6f006d81ded2c65767cc7803bc0b1a778b47544",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maoyingjun",
+      "credits": 90,
+      "joinedAt": 1770190431498
     }
   ]
 }

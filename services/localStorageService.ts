@@ -5,14 +5,20 @@ const STORAGE_KEY_IMAGES = 'urban_gen_gallery_images';
 const STORAGE_KEY_USER = 'urban_gen_current_user';
 const STORAGE_KEY_USERS = 'urban_gen_all_users';
 
-// 简单的密码哈希函数（实际应用中应使用bcrypt等库）
-const hashPassword = (password: string): string => {
-  return btoa(password + 'urban_gen_salt'); // 简单哈希，实际应用中应使用更强的算法
+// 使用SHA256密码哈希函数（与后端保持一致）
+const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + 'urban_gen_salt');
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hash));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
 };
 
 // 验证密码
-const verifyPassword = (password: string, hashedPassword: string): boolean => {
-  return hashPassword(password) === hashedPassword;
+const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
+  const computedHash = await hashPassword(password);
+  return computedHash === hashedPassword;
 };
 
 /**
@@ -134,7 +140,7 @@ export const loadAllUsersFromLocalStorage = (): User[] => {
  * @param password 密码
  * @returns 注册成功返回用户对象，失败返回错误信息
  */
-export const registerUser = (name: string, email: string, password: string): User | string => {
+export const registerUser = async (name: string, email: string, password: string): Promise<User | string> => {
   try {
     const allUsers = loadAllUsersFromLocalStorage();
     
@@ -153,7 +159,7 @@ export const registerUser = (name: string, email: string, password: string): Use
       id: uuidv4(),
       name,
       email,
-      password: hashPassword(password),
+      password: await hashPassword(password),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
       credits: 100, // 初始积分
       joinedAt: Date.now()
@@ -176,7 +182,7 @@ export const registerUser = (name: string, email: string, password: string): Use
  * @param password 密码
  * @returns 登录成功返回用户对象，失败返回错误信息
  */
-export const loginUser = (email: string, password: string): User | string => {
+export const loginUser = async (email: string, password: string): Promise<User | string> => {
   try {
     const allUsers = loadAllUsersFromLocalStorage();
     
@@ -188,7 +194,8 @@ export const loginUser = (email: string, password: string): User | string => {
     }
     
     // 验证密码
-    if (!verifyPassword(password, user.password)) {
+    const isValid = await verifyPassword(password, user.password);
+    if (!isValid) {
       return '密码错误';
     }
     
@@ -346,11 +353,20 @@ export const registerUserServer = async (name: string, email: string, password: 
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return errorData.error || '注册失败，请稍后重试';
+      try {
+        const errorData = await response.json();
+        return errorData.error || '注册失败，请稍后重试';
+      } catch {
+        return '注册失败，请稍后重试';
+      }
     }
 
-    const result = await response.json();
+    const text = await response.text();
+    if (!text) {
+      return '注册失败，服务器返回空响应';
+    }
+
+    const result = JSON.parse(text);
     return result.user as User;
   } catch (error) {
     console.error('Failed to register user:', error);
@@ -369,11 +385,20 @@ export const loginUserServer = async (email: string, password: string): Promise<
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return errorData.error || '登录失败，请稍后重试';
+      try {
+        const errorData = await response.json();
+        return errorData.error || '登录失败，请稍后重试';
+      } catch {
+        return '登录失败，请稍后重试';
+      }
     }
 
-    const result = await response.json();
+    const text = await response.text();
+    if (!text) {
+      return '登录失败，服务器返回空响应';
+    }
+
+    const result = JSON.parse(text);
     return result.user as User;
   } catch (error) {
     console.error('Failed to login user:', error);

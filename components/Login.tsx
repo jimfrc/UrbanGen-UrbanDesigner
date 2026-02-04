@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Page } from '../types';
+import { Page, User } from '../types';
 import Button from './Button';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { loginUserServer } from '../services/localStorageService';
 
 interface LoginProps {
-  onLogin: (email: string, password: string) => void;
+  onLogin: (user: User) => void;
   onNavigateToSignUp: () => void;
   onBack: () => void;
 }
@@ -38,7 +38,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
       if (typeof result === 'string') {
         setError(result);
       } else {
-        onLogin(email, password);
+        onLogin(result);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
@@ -49,7 +49,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4">
-      {/* Background with blur */}
       <div className="absolute inset-0 z-0">
         <img 
           src="https://picsum.photos/1920/1080?grayscale&blur=5" 

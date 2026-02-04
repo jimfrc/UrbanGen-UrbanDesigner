@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { User } from '../types';
 import Button from './Button';
-import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, UserIcon, ArrowLeft } from 'lucide-react';
 import { registerUserServer } from '../services/localStorageService';
 
 interface SignUpProps {
-  onSignUp: (name: string, email: string, password: string) => void;
+  onSignUp: (user: User) => void;
   onNavigateToLogin: () => void;
   onBack: () => void;
 }
@@ -48,7 +49,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
       if (typeof result === 'string') {
         setError(result);
       } else {
-        onSignUp(name, email, password);
+        onSignUp(result);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败');
@@ -59,7 +60,6 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4">
-      {/* Background with blur */}
       <div className="absolute inset-0 z-0">
         <img 
           src="https://picsum.photos/1920/1080?grayscale&blur=5" 
@@ -104,7 +104,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               </div>
             </div>
 

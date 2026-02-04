@@ -191,6 +191,22 @@
       "moduleName": "AI-rendering",
       "timestamp": 1769765041334,
       "createdAt": "2026-01-30T09:24:01.334Z"
+    },
+    {
+      "id": "1770190472497",
+      "userId": "1770190431498",
+      "userName": "maoyingjun",
+      "userEmail": "736950957@qq.com",
+      "imageId": "29661d85-a054-4a50-a3a8-8820f333a082",
+      "model": "nano-banana-fast",
+      "resolution": "nano-banana-fast",
+      "aspectRatio": "16:9",
+      "imageSize": "1K",
+      "prompt": "保持参考图视角和图面结构不变，参考图二风格将图一生成为商业效果图, 广角鸟瞰视角，晴朗白天的自然光线，建筑表面为现代风格和玻璃材质，植被和水面细节丰富",
+      "userPrompt": "广角鸟瞰视角，晴朗白天的自然光线，建筑表面为现代风格和玻璃材质，植被和水面细节丰富",
+      "moduleName": "AI-rendering",
+      "timestamp": 1770190472497,
+      "createdAt": "2026-02-04T07:34:32.497Z"
     }
   ]
 }

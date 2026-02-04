@@ -35,25 +35,13 @@ function App() {
     }
   };
 
-  const handleLogin = async (email: string, password: string) => {
-    const result = await loginUserServer(email, password);
-    
-    if (typeof result === 'string') {
-      throw new Error(result);
-    }
-    
-    setCurrentUser(result);
+  const handleLogin = async (user: User) => {
+    setCurrentUser(user);
     setCurrentPage(Page.HOME);
   };
 
-  const handleSignUp = async (name: string, email: string, password: string) => {
-    const result = await registerUserServer(name, email, password);
-    
-    if (typeof result === 'string') {
-      throw new Error(result);
-    }
-    
-    setCurrentUser(result);
+  const handleSignUp = async (user: User) => {
+    setCurrentUser(user);
     setCurrentPage(Page.HOME);
   };
 
