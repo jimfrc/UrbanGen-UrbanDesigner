@@ -5,6 +5,7 @@ import { generateUrbanConcept } from '../services/geminiService';
 import { saveGeneratedImageToLocal, saveGenerationRecord } from '../services/localStorageService';
 import { Download, Sliders, AlertCircle, Database, Lock, Upload } from 'lucide-react';
 import { v4 as uuidv } from 'uuid';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface GeneratorWorkspaceProps {
   module: DesignModule;
@@ -15,6 +16,7 @@ interface GeneratorWorkspaceProps {
 }
 
 const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, onBack, onImageGenerated, onNavigate }) => {
+  const { t } = useLanguage();
   const [userPrompt, setUserPrompt] = useState(module.defaultUserPrompt);
   const [resolution, setResolution] = useState<Resolution>(Resolution.RES_NANO_BANANA_FAST);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
@@ -119,7 +121,9 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
         imageSize: imageSize,
         prompt: fullPrompt,
         userPrompt: userPrompt,
-        moduleName: module.title
+        moduleName: module.title,
+        credits: cost,
+        success: true
       });
 
       onImageGenerated(newImage, cost);
@@ -258,7 +262,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
       {/* Left Panel: Controls */}
       <div className="w-full md:w-1/3 lg:w-1/4 p-6 border-r border-gray-100 flex flex-col h-[calc(100vh-6rem)] overflow-y-auto">
         <button onClick={onBack} className="text-gray-500 hover:text-black mb-6 flex items-center gap-2 text-sm font-medium">
-          ← Back to Hub
+          ← {t.common.generatorHub}
         </button>
 
         <h2 className="text-2xl font-bold mb-1">{module.title}</h2>
@@ -268,7 +272,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
           {/* Reference Image Upload Section */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Upload size={16} /> Reference Images (Optional, max {MAX_IMAGES})
+              <Upload size={16} /> {t.generatorWorkspace.referenceImage} (Optional, max {MAX_IMAGES})
             </label>
             
             {/* 已上传图像网格 */}
@@ -302,7 +306,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload size={24} className="text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">Upload Reference Images</p>
+                <p className="text-sm text-gray-500">{t.generatorWorkspace.uploadImage}</p>
                 <p className="text-xs text-gray-400 mt-1">PNG, JPG up to {MAX_SIZE_MB}MB (automatic compression)</p>
                 <p className="text-xs text-gray-400 mt-1">Uploaded: {referenceImages.length}/{MAX_IMAGES}</p>
                 <input 
@@ -327,7 +331,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
             <div>
               <textarea
                 className="w-full h-40 p-4 rounded-xl bg-gray-50 border-transparent focus:border-blue-500 focus:bg-white focus:ring-0 text-sm leading-relaxed resize-none transition-all"
-                placeholder="Add your custom parameters..."
+                placeholder={t.generatorWorkspace.promptPlaceholder}
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
               />
@@ -337,7 +341,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
           {/* Aspect Ratio Section */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-3">
-              Aspect Ratio
+              {t.generatorWorkspace.aspectRatio}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -358,7 +362,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
           {/* Image Size Section */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-3">
-              Resolution
+              {t.generatorWorkspace.imageSize}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {['1K', '2K', '4K'].map((size) => (
@@ -376,7 +380,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
           {/* Output Quality (Model) Section */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-3">
-              Model
+              {t.generatorWorkspace.model}
             </label>
             <div className="grid grid-cols-1 gap-3">
               {(Object.keys(CREDIT_COSTS) as Resolution[]).map((res) => {
@@ -414,7 +418,7 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
           {isGenerating && generationProgress !== null && (
             <div className="mb-4">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium text-gray-700">Generation Progress</span>
+                <span className="text-sm font-medium text-gray-700">{t.generatorWorkspace.generating}</span>
                 <span className="text-sm font-bold text-blue-600">{generationProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -433,10 +437,10 @@ const GeneratorWorkspace: React.FC<GeneratorWorkspaceProps> = ({ module, user, o
             disabled={user && !canAfford}
           >
             {!user ? (
-               <>Sign In to Generate</>
+               <>{t.common.login}</>
             ) : (
                <div className="flex items-center gap-2">
-                 {canAfford ? 'Generate Concept' : <><Lock size={18} /> Insufficient Points</>}
+                 {canAfford ? t.generatorWorkspace.generate : <><Lock size={18} /> Insufficient Points</>}
                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full ml-1">-{cost}</span>
                </div>
             )}

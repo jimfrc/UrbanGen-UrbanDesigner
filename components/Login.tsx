@@ -3,6 +3,7 @@ import { Page, User } from '../types';
 import Button from './Button';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { loginUserServer } from '../services/localStorageService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -11,6 +12,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) => {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,12 +23,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
     setError('');
     
     if (!email.trim()) {
-      setError('请输入邮箱');
+      setError(t.login.email);
       return;
     }
     
     if (!password.trim()) {
-      setError('请输入密码');
+      setError(t.login.password);
       return;
     }
     
@@ -41,7 +43,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
         onLogin(result);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败');
+      setError(err instanceof Error ? err.message : t.login.login);
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
           onClick={onBack}
           className="mb-8 flex items-center gap-2 text-gray-600 hover:text-black transition-colors font-medium"
         >
-          <ArrowLeft size={18} /> Back to Home
+          <ArrowLeft size={18} /> {t.common.home}
         </button>
 
         <div className="bg-white p-10 rounded-3xl shadow-2xl border border-gray-100">
@@ -71,8 +73,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
             <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
               <span className="text-white text-3xl font-bold">U</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="text-gray-500 mt-2">Sign in to manage your urban projects</p>
+            <h2 className="text-3xl font-bold text-gray-900">{t.login.title}</h2>
+            <p className="text-gray-500 mt-2">{t.login.subtitle}</p>
           </div>
 
           {error && (
@@ -83,7 +85,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t.login.email}</label>
               <div className="relative">
                 <input 
                   type="email"
@@ -98,7 +100,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t.login.password}</label>
               <div className="relative">
                 <input 
                   type="password"
@@ -117,13 +119,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToSignUp, onBack }) =>
               className="w-full py-4 rounded-xl text-lg shadow-xl shadow-blue-500/10"
               isLoading={isLoading}
             >
-              Sign In
+              {t.login.login}
             </Button>
           </form>
 
           <div className="mt-8 pt-8 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-500">
-              New to UrbanGen? <span onClick={onNavigateToSignUp} className="text-blue-600 font-bold cursor-pointer hover:underline">Create an account</span>
+              {t.login.noAccount} <span onClick={onNavigateToSignUp} className="text-blue-600 font-bold cursor-pointer hover:underline">{t.login.signUp}</span>
             </p>
           </div>
         </div>

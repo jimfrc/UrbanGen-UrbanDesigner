@@ -6,8 +6,11 @@ export enum Page {
   LOGIN = 'LOGIN',
   SIGN_UP = 'SIGN_UP',
   PROFILE = 'PROFILE',
-  RECHARGE = 'RECHARGE'
+  RECHARGE = 'RECHARGE',
+  ADMIN_DASHBOARD = 'ADMIN_DASHBOARD'
 }
+
+export const ADMIN_EMAIL = '172311284@qq.com';
 
 export enum Resolution {
   RES_NANO_BANANA_FAST = 'nano-banana-fast',
@@ -70,3 +73,57 @@ export const RECHARGE_PACKAGES: RechargePackage[] = [
   { id: 'pkg-1000', credits: 1000, price: 10, label: 'Advanced' },
   { id: 'pkg-4000', credits: 4000, price: 30, label: 'Professional' }
 ];
+
+export interface RechargeRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  amount: number;
+  credits: number;
+  status: 'pending' | 'success' | 'failed';
+  createdAt: number;
+}
+
+export interface GenerationRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  moduleName: string;
+  model: string;
+  prompt: string;
+  resolution: string;
+  aspectRatio: string;
+  imageSize: string;
+  success: boolean;
+  credits: number;
+  createdAt: number;
+}
+
+export interface AdminStats {
+  today: {
+    totalImages: number;
+    successImages: number;
+    successRate: number;
+    totalCredits: number;
+    newUsers: number;
+    totalRechargeAmount: number;
+    totalRechargeCredits: number;
+  };
+  total: {
+    totalImages: number;
+    successImages: number;
+    successRate: number;
+    totalCredits: number;
+    totalUsers: number;
+    totalRechargeAmount: number;
+    totalRechargeCredits: number;
+  };
+  moduleUsage: Array<{
+    moduleName: string;
+    count: number;
+  }>;
+  rechargeRecords: RechargeRecord[];
+  recentGenerations: GenerationRecord[];
+}

@@ -3,6 +3,7 @@ import { RechargePackage, RECHARGE_PACKAGES, User } from '../types';
 import Button from './Button';
 import { ArrowLeft, CheckCircle, Database, ShieldCheck, AlertCircle } from 'lucide-react';
 import { createPayment, queryPayment } from '../services/localStorageService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface RechargeProps {
   user: User;
@@ -11,6 +12,7 @@ interface RechargeProps {
 }
 
 const Recharge: React.FC<RechargeProps> = ({ user, onBack, onRechargeComplete }) => {
+  const { t } = useLanguage();
   const [selectedPackage, setSelectedPackage] = useState<RechargePackage | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -23,13 +25,13 @@ const Recharge: React.FC<RechargeProps> = ({ user, onBack, onRechargeComplete })
     setIsPaying(true);
     setError(null);
 
-    const result = await createPayment(user.id, pkg.id, pkg.price, `充值${pkg.credits}积分`);
+    const result = await createPayment(user.id, pkg.id, pkg.price, `充值${pkg.credits}积分`, pkg.credits);
 
     if (result.success && result.qrCode) {
       setQrCode(result.qrCode);
       setOrderId(result.orderId);
     } else {
-      setError(result.error || '创建支付订单失败');
+      setError(result.error || t.recharge.error);
       setIsPaying(false);
     }
   };
@@ -64,7 +66,7 @@ const Recharge: React.FC<RechargeProps> = ({ user, onBack, onRechargeComplete })
           <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={48} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Payment Successful</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.recharge.success}</h2>
           <p className="text-gray-500 mb-8">
             Successfully recharged <span className="text-green-600 font-bold">{selectedPackage?.credits}</span> credits to your account.
           </p>
@@ -85,8 +87,8 @@ const Recharge: React.FC<RechargeProps> = ({ user, onBack, onRechargeComplete })
         </button>
 
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Recharge Credits</h1>
-          <p className="text-gray-500 text-lg">Choose a package to power your design workflow</p>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">{t.recharge.title}</h1>
+          <p className="text-gray-500 text-lg">{t.recharge.subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

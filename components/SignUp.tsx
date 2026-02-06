@@ -3,6 +3,7 @@ import { User } from '../types';
 import Button from './Button';
 import { Mail, Lock, UserIcon, ArrowLeft } from 'lucide-react';
 import { registerUserServer } from '../services/localStorageService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SignUpProps {
   onSignUp: (user: User) => void;
@@ -11,6 +12,7 @@ interface SignUpProps {
 }
 
 const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) => {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,17 +24,17 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
     setError('');
     
     if (!name.trim()) {
-      setError('请输入用户名');
+      setError(t.signUp.name);
       return;
     }
     
     if (!email.trim()) {
-      setError('请输入邮箱');
+      setError(t.signUp.email);
       return;
     }
     
     if (!password.trim()) {
-      setError('请输入密码');
+      setError(t.signUp.password);
       return;
     }
     
@@ -52,7 +54,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
         onSignUp(result);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '注册失败');
+      setError(err instanceof Error ? err.message : t.signUp.signUp);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +76,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
           onClick={onBack}
           className="mb-8 flex items-center gap-2 text-gray-600 hover:text-black transition-colors font-medium"
         >
-          <ArrowLeft size={18} /> Back to Home
+          <ArrowLeft size={18} /> {t.common.home}
         </button>
 
         <div className="bg-white p-10 rounded-3xl shadow-2xl border border-gray-100">
@@ -82,8 +84,8 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
             <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
               <span className="text-white text-3xl font-bold">U</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-gray-500 mt-2">Join UrbanGen to start creating amazing urban designs</p>
+            <h2 className="text-3xl font-bold text-gray-900">{t.signUp.title}</h2>
+            <p className="text-gray-500 mt-2">{t.signUp.subtitle}</p>
           </div>
 
           {error && (
@@ -94,7 +96,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t.signUp.name}</label>
               <div className="relative">
                 <input 
                   type="text"
@@ -109,7 +111,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t.signUp.email}</label>
               <div className="relative">
                 <input 
                   type="email"
@@ -124,7 +126,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t.signUp.password}</label>
               <div className="relative">
                 <input 
                   type="password"
@@ -146,13 +148,13 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, onNavigateToLogin, onBack }) 
               className="w-full py-4 rounded-xl text-lg shadow-xl shadow-blue-500/10"
               isLoading={isLoading}
             >
-              Create Account
+              {t.signUp.signUp}
             </Button>
           </form>
 
           <div className="mt-8 pt-8 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-500">
-              Already have an account? <span onClick={onNavigateToLogin} className="text-blue-600 font-bold cursor-pointer hover:underline">Sign In</span>
+              {t.signUp.hasAccount} <span onClick={onNavigateToLogin} className="text-blue-600 font-bold cursor-pointer hover:underline">{t.signUp.login}</span>
             </p>
           </div>
         </div>

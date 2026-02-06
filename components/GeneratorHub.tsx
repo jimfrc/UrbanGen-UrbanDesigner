@@ -1,5 +1,6 @@
 import React from 'react';
 import { DesignModule } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface GeneratorHubProps {
   modules: DesignModule[];
@@ -7,13 +8,14 @@ interface GeneratorHubProps {
 }
 
 const GeneratorHub: React.FC<GeneratorHubProps> = ({ modules, onSelectModule }) => {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8 bg-gray-50 pb-20">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Design Studio Toolbox</h2>
-          <p className="text-xl text-blue-600 font-medium tracking-wide uppercase">Urban Planning Enhanced Edition</p>
-          <p className="mt-4 text-gray-500 max-w-2xl mx-auto">Select a design module below to begin your conceptualization process. Each module is optimized for specific design situation.</p>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">{t.generatorHub.title}</h2>
+          <p className="text-xl text-blue-600 font-medium tracking-wide uppercase">{t.generatorHub.subtitle}</p>
+          <p className="mt-4 text-gray-500 max-w-2xl mx-auto">{t.generatorHub.selectModule}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

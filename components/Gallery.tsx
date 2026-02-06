@@ -1,12 +1,14 @@
 import React from 'react';
 import { GeneratedImage } from '../types';
 import { Download, Maximize2 } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface GalleryProps {
   images: GeneratedImage[];
 }
 
 const Gallery: React.FC<GalleryProps> = ({ images }) => {
+  const { t } = useLanguage();
   if (images.length === 0) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center bg-gray-50">
@@ -14,8 +16,8 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
           <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
             <Maximize2 size={32} />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Get creating!</h3>
-          <p className="text-gray-500">No urban designs generated yet. Go to the Studio to create your first masterpiece.</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{t.gallery.title}</h3>
+          <p className="text-gray-500">{t.gallery.empty}</p>
         </div>
       </div>
     );
@@ -25,8 +27,8 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
     <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8 bg-gray-50 pb-20">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12 animate-fade-in">
-          <h2 className="text-3xl font-bold text-gray-900">Community Gallery</h2>
-          <p className="mt-2 text-gray-500">Explore designs created by the Nano Banana Pro engine</p>
+          <h2 className="text-3xl font-bold text-gray-900">{t.gallery.title}</h2>
+          <p className="mt-2 text-gray-500">{t.gallery.subtitle}</p>
         </div>
 
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">

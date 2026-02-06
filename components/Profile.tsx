@@ -2,6 +2,7 @@ import React from 'react';
 import { User, GeneratedImage, Page } from '../types';
 import { Database, Image as ImageIcon, Calendar, LogOut, ChevronRight, Plus } from 'lucide-react';
 import Button from './Button';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProfileProps {
   user: User;
@@ -11,6 +12,7 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigate }) => {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen pt-24 pb-20 px-4 bg-gray-50">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -36,7 +38,7 @@ const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigat
 
           <div className="flex flex-col gap-3 w-full md:w-auto">
             <Button variant="outline" className="border-red-100 text-red-600 hover:bg-red-50" onClick={onLogout}>
-              <LogOut size={18} /> Sign Out
+              <LogOut size={18} /> {t.common.logout}
             </Button>
           </div>
         </div>
@@ -52,14 +54,14 @@ const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigat
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Credits Balance</p>
+                <p className="text-gray-500 text-sm font-medium">{t.common.credits}</p>
                 <h3 className="text-3xl font-bold text-gray-900 mt-1">{user.credits} <span className="text-sm font-normal text-gray-400 ml-1">pts</span></h3>
               </div>
               <button 
                 onClick={() => onNavigate(Page.RECHARGE)}
                 className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95"
               >
-                <Plus size={16} /> Top-up
+                <Plus size={16} /> {t.common.recharge}
               </button>
             </div>
           </div>
@@ -68,7 +70,7 @@ const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigat
             <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4">
               <ImageIcon size={24} />
             </div>
-            <p className="text-gray-500 text-sm font-medium">Total Designs</p>
+            <p className="text-gray-500 text-sm font-medium">{t.profile.totalImages}</p>
             <h3 className="text-3xl font-bold text-gray-900 mt-1">{userImages.length}</h3>
           </div>
 
@@ -76,7 +78,7 @@ const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigat
             <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-4">
               <Calendar size={24} />
             </div>
-            <p className="text-gray-500 text-sm font-medium">Member Since</p>
+            <p className="text-gray-500 text-sm font-medium">{t.profile.joinDate}</p>
             <h3 className="text-3xl font-bold text-gray-900 mt-1">
               {new Date(user.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
             </h3>
@@ -86,7 +88,7 @@ const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigat
         {/* Recent Designs List */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-8 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">Personal Workspace</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t.profile.personalWorkshop}</h2>
             <button className="text-sm text-blue-600 font-semibold hover:underline flex items-center gap-1">
               View all <ChevronRight size={14} />
             </button>
@@ -115,7 +117,7 @@ const Profile: React.FC<ProfileProps> = ({ user, userImages, onLogout, onNavigat
               ))
             ) : (
               <div className="p-12 text-center text-gray-400">
-                No designs yet.
+                {t.profile.empty}
               </div>
             )}
           </div>

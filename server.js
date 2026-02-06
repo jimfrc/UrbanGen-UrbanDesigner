@@ -141,7 +141,7 @@ app.post('/api/save-image', (req, res) => {
 
 app.post('/api/save-generation-record', (req, res) => {
   try {
-    const { userId, userName, userEmail, imageId, model, resolution, aspectRatio, imageSize, prompt, userPrompt, moduleName } = req.body;
+    const { userId, userName, userEmail, imageId, model, resolution, aspectRatio, imageSize, prompt, userPrompt, moduleName, credits, success } = req.body;
 
     if (!userId || !imageId || !model) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -162,6 +162,8 @@ app.post('/api/save-generation-record', (req, res) => {
       prompt: prompt || '',
       userPrompt: userPrompt || '',
       moduleName: moduleName || '',
+      credits: credits || 0,
+      success: success !== false,
       timestamp: Date.now(),
       createdAt: new Date().toISOString()
     };
@@ -359,7 +361,7 @@ app.put('/api/user/:userId/credits', (req, res) => {
 
 app.post('/api/payment/create', async (req, res) => {
   try {
-    const { userId, packageId, amount, subject } = req.body;
+    const { userId, packageId, amount, subject, credits } = req.body;
 
     if (!userId || !amount) {
       return res.status(400).json({ error: '缺少必要参数' });
@@ -373,6 +375,7 @@ app.post('/api/payment/create', async (req, res) => {
       userId,
       packageId,
       amount: parseFloat(amount),
+      credits: credits || 0,
       subject: subject || '充值积分',
       status: 'pending',
       createdAt: Date.now()
@@ -493,6 +496,194 @@ app.get('/api/images/:imageId', (req, res) => {
   } catch (error) {
     console.error('Error serving image:', error);
     res.status(500).json({ error: 'Failed to serve image' });
+  }
+});
+
+const ADMIN_EMAIL = '172311284@qq.com';
+
+const isAdmin = (email) => {
+  return email === ADMIN_EMAIL;
+};
+
+app.get('/api/admin/stats', (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email || !isAdmin(email)) {
+      return res.status(403).json({ error: '无权访问' });
+    }
+
+    const generationDb = loadGenerationRecords();
+    const usersDb = loadUsers();
+    const ordersDb = loadOrders();
+
+    const now = Date.now();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartTime = todayStart.getTime();
+
+    const todayRecords = generationDb.records.filter(r => r.timestamp >= todayStartTime);
+    const todayRecordsSuccess = todayRecords.filter(r => r.success !== false);
+
+    const todayOrders = ordersDb.orders.filter(o => o.createdAt >= todayStartTime && o.status === 'success');
+    const todayNewUsers = usersDb.users.filter(u => u.joinedAt >= todayStartTime);
+
+    const totalRecordsSuccess = generationDb.records.filter(r => r.success !== false);
+    const totalOrdersSuccess = ordersDb.orders.filter(o => o.status === 'success');
+
+    const moduleUsageMap = {};
+    generationDb.records.forEach(record => {
+      const moduleName = record.moduleName || 'Unknown';
+      if (!moduleUsageMap[moduleName]) {
+        moduleUsageMap[moduleName] = 0;
+      }
+      moduleUsageMap[moduleName]++;
+    });
+
+    const moduleUsage = Object.entries(moduleUsageMap).map(([moduleName, count]) => ({
+      moduleName,
+      count
+    })).sort((a, b) => b.count - a.count);
+
+    const todayTotalCredits = todayRecords.reduce((sum, r) => sum + (r.credits || 0), 0);
+    const totalCredits = generationDb.records.reduce((sum, r) => sum + (r.credits || 0), 0);
+
+    const todayTotalRechargeAmount = todayOrders.reduce((sum, o) => sum + o.amount, 0);
+    const totalRechargeAmount = totalOrdersSuccess.reduce((sum, o) => sum + o.amount, 0);
+
+    const todayTotalRechargeCredits = todayOrders.reduce((sum, o) => sum + (o.credits || 0), 0);
+    const totalRechargeCredits = totalOrdersSuccess.reduce((sum, o) => sum + (o.credits || 0), 0);
+
+    const rechargeRecords = ordersDb.orders.map(order => {
+      const user = usersDb.users.find(u => u.id === order.userId);
+      return {
+        id: order.id,
+        userId: order.userId,
+        userName: user?.name || '',
+        userEmail: user?.email || '',
+        amount: order.amount,
+        credits: order.credits || 0,
+        status: order.status,
+        createdAt: order.createdAt
+      };
+    }).sort((a, b) => b.createdAt - a.createdAt);
+
+    const recentGenerations = generationDb.records.map(record => {
+      const user = usersDb.users.find(u => u.id === record.userId);
+      return {
+        id: record.id,
+        userId: record.userId,
+        userName: user?.name || '',
+        userEmail: user?.email || '',
+        moduleName: record.moduleName || '',
+        model: record.model || '',
+        prompt: record.prompt || '',
+        resolution: record.resolution || '',
+        aspectRatio: record.aspectRatio || '',
+        imageSize: record.imageSize || '',
+        success: record.success !== false,
+        credits: record.credits || 0,
+        createdAt: record.timestamp
+      };
+    }).sort((a, b) => b.createdAt - a.createdAt).slice(0, 100);
+
+    const stats = {
+      today: {
+        totalImages: todayRecords.length,
+        successImages: todayRecordsSuccess.length,
+        successRate: todayRecords.length > 0 ? (todayRecordsSuccess.length / todayRecords.length * 100).toFixed(2) : 0,
+        totalCredits: todayTotalCredits,
+        newUsers: todayNewUsers.length,
+        totalRechargeAmount: todayTotalRechargeAmount,
+        totalRechargeCredits: todayTotalRechargeCredits
+      },
+      total: {
+        totalImages: generationDb.records.length,
+        successImages: totalRecordsSuccess.length,
+        successRate: generationDb.records.length > 0 ? (totalRecordsSuccess.length / generationDb.records.length * 100).toFixed(2) : 0,
+        totalCredits: totalCredits,
+        totalUsers: usersDb.users.length,
+        totalRechargeAmount: totalRechargeAmount,
+        totalRechargeCredits: totalRechargeCredits
+      },
+      moduleUsage,
+      rechargeRecords,
+      recentGenerations
+    };
+
+    res.json({ success: true, stats });
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    res.status(500).json({ error: '获取统计数据失败' });
+  }
+});
+
+app.get('/api/admin/recharge-records', (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email || !isAdmin(email)) {
+      return res.status(403).json({ error: '无权访问' });
+    }
+
+    const ordersDb = loadOrders();
+    const usersDb = loadUsers();
+
+    const records = ordersDb.orders.map(order => {
+      const user = usersDb.users.find(u => u.id === order.userId);
+      return {
+        id: order.id,
+        userId: order.userId,
+        userName: user?.name || '',
+        userEmail: user?.email || '',
+        amount: order.amount,
+        credits: order.credits || 0,
+        status: order.status,
+        createdAt: order.createdAt
+      };
+    }).sort((a, b) => b.createdAt - a.createdAt);
+
+    res.json({ success: true, records });
+  } catch (error) {
+    console.error('Error fetching recharge records:', error);
+    res.status(500).json({ error: '获取充值记录失败' });
+  }
+});
+
+app.get('/api/admin/generation-records', (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email || !isAdmin(email)) {
+      return res.status(403).json({ error: '无权访问' });
+    }
+
+    const generationDb = loadGenerationRecords();
+    const usersDb = loadUsers();
+
+    const records = generationDb.records.map(record => {
+      const user = usersDb.users.find(u => u.id === record.userId);
+      return {
+        id: record.id,
+        userId: record.userId,
+        userName: user?.name || '',
+        userEmail: user?.email || '',
+        moduleName: record.moduleName || '',
+        model: record.model || '',
+        prompt: record.prompt || '',
+        resolution: record.resolution || '',
+        aspectRatio: record.aspectRatio || '',
+        imageSize: record.imageSize || '',
+        success: record.success !== false,
+        credits: record.credits || 0,
+        createdAt: record.timestamp
+      };
+    }).sort((a, b) => b.createdAt - a.createdAt);
+
+    res.json({ success: true, records });
+  } catch (error) {
+    console.error('Error fetching generation records:', error);
+    res.status(500).json({ error: '获取生成记录失败' });
   }
 });
 

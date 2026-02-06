@@ -303,6 +303,8 @@ export const saveGenerationRecord = async (record: {
   prompt?: string;
   userPrompt?: string;
   moduleName?: string;
+  credits?: number;
+  success?: boolean;
 }): Promise<boolean> => {
   try {
     const response = await fetch('/api/save-generation-record', {
@@ -444,14 +446,14 @@ export const updateUserCreditsServer = async (userId: string, credits: number): 
   }
 };
 
-export const createPayment = async (userId: string, packageId: string, amount: number, subject?: string): Promise<{ success: boolean; orderId?: string; qrCode?: string; error?: string }> => {
+export const createPayment = async (userId: string, packageId: string, amount: number, subject?: string, credits?: number): Promise<{ success: boolean; orderId?: string; qrCode?: string; error?: string }> => {
   try {
     const response = await fetch('/api/payment/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId, packageId, amount, subject })
+      body: JSON.stringify({ userId, packageId, amount, subject, credits })
     });
 
     if (!response.ok) {
@@ -480,5 +482,68 @@ export const queryPayment = async (orderId: string): Promise<{ success: boolean;
   } catch (error) {
     console.error('Failed to query payment:', error);
     return { success: false };
+  }
+};
+
+export const getAdminStats = async (email: string): Promise<{ success: boolean; stats?: any; error?: string }> => {
+  try {
+    const response = await fetch(`/api/admin/stats?email=${encodeURIComponent(email)}`);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error };
+      } catch {
+        return { success: false, error: `HTTP ${response.status}: 无权访问或服务器错误` };
+      }
+    }
+
+    const result = await response.json();
+    return { success: true, stats: result.stats };
+  } catch (error) {
+    console.error('Failed to fetch admin stats:', error);
+    return { success: false, error: '获取统计数据失败' };
+  }
+};
+
+export const getAdminRechargeRecords = async (email: string): Promise<{ success: boolean; records?: any[]; error?: string }> => {
+  try {
+    const response = await fetch(`/api/admin/recharge-records?email=${encodeURIComponent(email)}`);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error };
+      } catch {
+        return { success: false, error: `HTTP ${response.status}: 无权访问或服务器错误` };
+      }
+    }
+
+    const result = await response.json();
+    return { success: true, records: result.records };
+  } catch (error) {
+    console.error('Failed to fetch admin recharge records:', error);
+    return { success: false, error: '获取充值记录失败' };
+  }
+};
+
+export const getAdminGenerationRecords = async (email: string): Promise<{ success: boolean; records?: any[]; error?: string }> => {
+  try {
+    const response = await fetch(`/api/admin/generation-records?email=${encodeURIComponent(email)}`);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error };
+      } catch {
+        return { success: false, error: `HTTP ${response.status}: 无权访问或服务器错误` };
+      }
+    }
+
+    const result = await response.json();
+    return { success: true, records: result.records };
+  } catch (error) {
+    console.error('Failed to fetch admin generation records:', error);
+    return { success: false, error: '获取生成记录失败' };
   }
 };

@@ -1,18 +1,26 @@
 import React from 'react';
-import { Page, User } from '../types';
-import { Layout, Palette, Image as ImageIcon, User as UserIcon, LogIn, Database } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { Page, User, ADMIN_EMAIL } from '../types';
+import { Layout, Palette, Image as ImageIcon, User as UserIcon, LogIn, Database, Languages, Crown } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavbarProps {
   currentPage: Page;
   onNavigate: (page: Page) => void;
   user: User | null;
+  hasRechargeRecord?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, hasRechargeRecord = false }) => {
+  const { t, toggleLanguage, language } = useLanguage();
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isProMember = hasRechargeRecord;
+
   const navItems = [
-    { page: Page.HOME, label: 'Home', icon: Layout },
-    { page: Page.GENERATOR_HUB, label: 'Design Studio', icon: Palette },
-    { page: Page.GALLERY, label: 'Gallery', icon: ImageIcon },
+    { page: Page.HOME, label: t.common.home, icon: Layout },
+    { page: Page.GENERATOR_HUB, label: t.common.generatorHub, icon: Palette },
+    { page: Page.GALLERY, label: t.common.gallery, icon: ImageIcon },
   ];
 
   return (
@@ -44,12 +52,38 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user }) => {
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium transition-colors"
+              title={t.common.language}
+            >
+              <Languages size={16} />
+              <span>{language === 'zh' ? 'EN' : '中'}</span>
+            </button>
+
             {user ? (
               <div className="flex items-center gap-3 pl-4 border-l border-gray-100">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 rounded-full border border-amber-100">
+                {isProMember && (
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">
+                    PRO MEMBER
+                  </span>
+                )}
+                <button 
+                  onClick={() => onNavigate(Page.RECHARGE)}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 hover:bg-amber-100 rounded-full border border-amber-100 transition-colors"
+                >
                   <Database size={14} className="text-amber-600" />
                   <span className="text-sm font-bold text-amber-700">{user.credits}</span>
-                </div>
+                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => onNavigate(Page.ADMIN_DASHBOARD)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-full text-sm font-medium transition-colors"
+                  >
+                    <Shield size={14} />
+                    {t.common.adminDashboard}
+                  </button>
+                )}
                 <button 
                   onClick={() => onNavigate(Page.PROFILE)}
                   className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all ${
@@ -65,7 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user }) => {
                 className="flex items-center gap-2 px-5 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
               >
                 <LogIn size={18} />
-                Sign In
+                {t.common.login}
               </button>
             )}
           </div>

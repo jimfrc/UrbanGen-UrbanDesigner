@@ -8,18 +8,21 @@ import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Profile from './components/Profile';
 import Recharge from './components/Recharge';
+import AdminDashboard from './components/AdminDashboard';
 import { Page, GeneratedImage, DesignModule, User } from './types';
-import { MODULES } from './modules';
-import { loadImagesFromLocalStorage, saveImagesToLocalStorage, loadUserFromLocalStorage, saveUserToLocalStorage, clearUserFromLocalStorage, loginUserServer, registerUserServer, updateUserCreditsServer, getUserFromServer } from './services/localStorageService';
+import { getModules } from './modules';
+import { loadImagesFromLocalStorage, saveImagesToLocalStorage, loadUserFromLocalStorage, saveUserToLocalStorage, clearUserFromLocalStorage, loginUserServer, registerUserServer, updateUserCreditsServer, getUserFromServer, getAdminRechargeRecords } from './services/localStorageService';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
-function App() {
+function AppContent() {
+  const { language } = useLanguage();
   const [currentPage, setCurrentPage] = useState<Page>(Page.HOME);
   const [selectedModule, setSelectedModule] = useState<DesignModule | null>(null);
   const [galleryImages, setGalleryImages] = useState<GeneratedImage[]>(loadImagesFromLocalStorage);
-  // 从本地存储加载用户信息
   const [currentUser, setCurrentUser] = useState<User | null>(loadUserFromLocalStorage);
+  const [hasRechargeRecord, setHasRechargeRecord] = useState<boolean>(false);
+  const modules = getModules(language);
 
-  // 监听galleryImages变化，自动保存到本地存储
   useEffect(() => {
     saveImagesToLocalStorage(galleryImages);
   }, [galleryImages]);
@@ -28,9 +31,23 @@ function App() {
     saveUserToLocalStorage(currentUser);
   }, [currentUser]);
 
+  useEffect(() => {
+    if (currentUser) {
+      checkRechargeRecord();
+    }
+  }, [currentUser]);
+
+  const checkRechargeRecord = async () => {
+    if (!currentUser) return;
+    const result = await getAdminRechargeRecords(currentUser.email);
+    if (result.success && result.records) {
+      setHasRechargeRecord(result.records.some(r => r.status === 'success' && r.userId === currentUser.id));
+    }
+  };
+
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
-    if (page !== Page.GENERATOR_WORKSPACE && page !== Page.PROFILE && page !== Page.RECHARGE) {
+    if (page !== Page.GENERATOR_WORKSPACE && page !== Page.PROFILE && page !== Page.RECHARGE && page !== Page.ADMIN_DASHBOARD) {
       setSelectedModule(null);
     }
   };
@@ -84,12 +101,12 @@ function App() {
 
   return (
     <div className="font-sans text-gray-900 bg-white min-h-screen selection:bg-blue-100 selection:text-blue-900">
-      {/* 在登录和注册页面不显示导航栏 */}
       {currentPage !== Page.LOGIN && currentPage !== Page.SIGN_UP && (
         <Navbar 
           currentPage={currentPage} 
           onNavigate={handleNavigate} 
           user={currentUser} 
+          hasRechargeRecord={hasRechargeRecord}
         />
       )}
       
@@ -132,7 +149,7 @@ function App() {
         )}
 
         {currentPage === Page.GENERATOR_HUB && (
-          <GeneratorHub modules={MODULES} onSelectModule={handleSelectModule} />
+          <GeneratorHub modules={modules} onSelectModule={handleSelectModule} />
         )}
 
         {currentPage === Page.GENERATOR_WORKSPACE && selectedModule && (
@@ -148,8 +165,23 @@ function App() {
         {currentPage === Page.GALLERY && (
           <Gallery images={galleryImages} />
         )}
+
+        {currentPage === Page.ADMIN_DASHBOARD && currentUser && (
+          <AdminDashboard 
+            user={currentUser}
+            onBack={() => handleNavigate(Page.HOME)}
+          />
+        )}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 
